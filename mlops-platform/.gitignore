@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Artefacts générés (reproductibles via `make data train`)
+data/
+mlflow_data/
+mlruns/
+reports/

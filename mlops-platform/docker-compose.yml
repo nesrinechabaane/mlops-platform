@@ -1,0 +1,41 @@
+# Stack complète : entraînement -> API de prédiction + interface MLflow (+ surveillance à la demande).
+# Tous les services partagent le volume `mlops_data` (données, base MLflow, artefacts, rapports).
+
+x-app: &app
+  image: mlops-platform:local
+  build: .
+  environment:
+    MLOPS_HOME: /data
+  volumes:
+    - mlops_data:/data
+
+services:
+  trainer:
+    <<: *app
+    command: sh -c "python -m mlops_platform.cli prepare-data && python -m mlops_platform.cli train"
+
+  api:
+    <<: *app
+    ports:
+      - "8000:8000"
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+
+  mlflow-ui:
+    <<: *app
+    command: mlflow ui --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////data/mlflow_data/mlflow.db
+    ports:
+      - "5000:5000"
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+
+  # docker compose --profile tools run --rm monitor
+  monitor:
+    <<: *app
+    profiles: ["tools"]
+    command: python -m mlops_platform.cli monitor --retrain
+
+volumes:
+  mlops_data:

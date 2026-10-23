@@ -1,0 +1,36 @@
+# Paramètres centralisés du pipeline (versionnés avec le code => reproductibilité).
+# Tous les chemins sont relatifs à MLOPS_HOME (par défaut : la racine du projet).
+
+data:
+  raw_path: data/raw/dataset.csv
+  reference_path: data/processed/reference.csv      # features d'entraînement, base de la détection de dérive
+  production_log_path: data/production/predictions_log.csv  # alimenté par l'API
+  target: target
+  test_size: 0.2
+  seed: 42
+  min_rows: 100
+  max_null_ratio: 0.05
+
+mlflow:
+  experiment_name: mlops-platform
+  model_name: breast-cancer-classifier
+
+train:
+  model_type: random_forest        # random_forest | logistic_regression
+  cv_folds: 5
+  # Porte qualité : un modèle sous ce F1 n'est jamais promu en production.
+  min_f1: 0.90
+  random_forest:
+    n_estimators: 200
+    max_depth: 8
+    min_samples_leaf: 2
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+
+monitoring:
+  p_value_threshold: 0.05     # test de Kolmogorov-Smirnov par feature
+  psi_threshold: 0.2          # Population Stability Index (> 0.2 = changement significatif)
+  drift_share_threshold: 0.3  # dérive du dataset si > 30 % des features dérivent
+  min_rows: 30                # en-dessous, pas assez de données pour conclure
+  reports_dir: reports
